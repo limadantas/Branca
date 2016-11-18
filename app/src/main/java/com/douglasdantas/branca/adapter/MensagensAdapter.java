@@ -1,7 +1,6 @@
 package com.douglasdantas.branca.adapter;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,9 +9,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.douglasdantas.branca.ConversaActivity;
-import com.douglasdantas.branca.MainActivity;
 import com.douglasdantas.branca.R;
 import com.douglasdantas.branca.model.Grupo;
+import com.douglasdantas.branca.model.Mensagem;
 
 import java.util.ArrayList;
 
@@ -20,28 +19,30 @@ import java.util.ArrayList;
  * Created by oceanmanaus on 17/11/2016.
  */
 
-public class ConversasAdapter extends RecyclerView.Adapter<ConversasAdapter.ViewHolder> {
+public class MensagensAdapter extends RecyclerView.Adapter<MensagensAdapter.ViewHolder> {
     public static class  ViewHolder  extends RecyclerView.ViewHolder{
-        TextView tvGrupo;
+        TextView tvID;
+        TextView tvMsg;
 
         public ViewHolder(View v) {
             super(v);
-            tvGrupo = (TextView) v.findViewById(R.id.tvGrupo);
+            tvID = (TextView) v.findViewById(R.id.tvID); 
+            tvMsg = (TextView) v.findViewById(R.id.tvMsg);
         }
     }
 
-    ArrayList<Grupo> grupos;
+    ArrayList<Mensagem> mensagens;
     Context context;
 
-    public ConversasAdapter(Context ctx, ArrayList<Grupo> grupos) {
-        this.grupos = grupos;
+    public MensagensAdapter(Context ctx, ArrayList<Mensagem> mensagens) {
+        this.mensagens = mensagens;
         context = ctx;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.grupo_layout, parent, false);
+                .inflate(R.layout.mensagem_layout, parent, false);
         // set the view's size, margins, paddings and layout parameters
         ViewHolder vh = new ViewHolder(v);
 
@@ -50,29 +51,26 @@ public class ConversasAdapter extends RecyclerView.Adapter<ConversasAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        final Grupo grupo = grupos.get(position);
+        Mensagem mensagem = mensagens.get(position);
 
-        holder.tvGrupo.setText(grupo.id);
-
-        holder.tvGrupo.setOnClickListener(new View.OnClickListener() {
+        holder.tvID.setText(mensagem.id);
+        holder.tvMsg.setText(mensagem.msg);
+/*
+        holder.tvMsg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 TextView tv = (TextView) v.findViewById(R.id.tvGrupo);
                 Toast.makeText(context, tv.getText(), Toast.LENGTH_SHORT).show();
 
                 Intent it = new Intent(context, ConversaActivity.class);
-                Bundle b = new Bundle();
-                b.putString("grupo", grupo.id);
-                b.putBoolean("grupoFlag", true);
-                it.putExtras(b);
                 context.startActivity(it);
             }
-        });
+        });*/
     }
 
     @Override
     public int getItemCount() {
-        return (null != grupos ? grupos.size() : 0);
+        return (null != mensagens ? mensagens.size() : 0);
     }
 
 

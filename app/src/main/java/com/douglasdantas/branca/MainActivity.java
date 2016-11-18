@@ -15,7 +15,6 @@ import com.douglasdantas.branca.model.Grupo;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -74,13 +73,15 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<Grupo> pesquisar(String q) {
         JSONArray jsonGrupos = null;
-        try {
-            jsonGrupos = getJSONObjectFromURL("http://projetos.oceanmanaus.com?q="+q);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            JSONThread gth = new JSONThread("http://projetos.oceanmanaus.com/branca.php?q="+q);
+
+            (new Thread(gth)).start();
+            while (!gth.isFinished()) {
+
+            }
+            jsonGrupos = gth.array;
+
+            //jsonGrupos = getJSONObjectFromURL("http://projetos.oceanmanaus.com?q="+q);
 
         ArrayList<Grupo> grupos = new ArrayList<>();
         try {
@@ -94,39 +95,4 @@ public class MainActivity extends AppCompatActivity {
         return grupos;
     }
 
-    public static JSONArray getJSONObjectFromURL(String urlString) throws IOException, JSONException {
-
-        HttpURLConnection urlConnection = null;
-
-        URL url = new URL(urlString);
-
-        urlConnection = (HttpURLConnection) url.openConnection();
-
-        urlConnection.setRequestMethod("GET");
-        urlConnection.setReadTimeout(10000 /* milliseconds */);
-        urlConnection.setConnectTimeout(15000 /* milliseconds */);
-
-        urlConnection.setDoOutput(true);
-
-        urlConnection.connect();
-
-        BufferedReader br=new BufferedReader(new InputStreamReader(url.openStream()));
-
-        char[] buffer = new char[1024];
-
-        String jsonString = new String();
-
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line+"\n");
-        }
-        br.close();
-
-        jsonString = sb.toString();
-
-        System.out.println("JSON: " + jsonString);
-
-        return new JSONArray(jsonString);
-    }
 }

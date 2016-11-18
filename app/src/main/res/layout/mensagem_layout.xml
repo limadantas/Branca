@@ -4,13 +4,22 @@
     android:background="@drawable/msg_borda"
     >
     <TextView
-        android:id="@+id/tvGrupo"
+        android:id="@+id/tvID"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginBottom="16dp"
-        android:textSize="20dp"
+        android:textSize="15dp"
         android:textStyle="bold"
         android:text="Pelada da EST"/>
+
+    <TextView
+        android:id="@+id/tvMsg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvID"
+        android:layout_marginLeft="16dp"
+        android:layout_marginBottom="16dp"
+        android:textSize="20dp"
+        android:text="Pelada da EST" />
 </RelativeLayout>
