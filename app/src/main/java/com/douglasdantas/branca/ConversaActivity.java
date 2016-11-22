@@ -1,16 +1,12 @@
 package com.douglasdantas.branca;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.douglasdantas.branca.adapter.MensagensAdapter;
@@ -29,7 +25,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 public class ConversaActivity extends AppCompatActivity {
@@ -43,7 +38,6 @@ public class ConversaActivity extends AppCompatActivity {
     String clientId;
     boolean conectado;
     String topico_pai;
-    TelephonyManager tManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,101 +51,93 @@ public class ConversaActivity extends AppCompatActivity {
             boolean grupoFlag = b.getBoolean("grupoFlag");
 
             if (grupoFlag) {
-                topico_pai = "/branca/grupos/"+id+"/#";
+                topico_pai = "/branca/grupos/"+id;
             }
             else {
-                topico_pai = "/branca/usuarios/"+id+"/#";
+                topico_pai = "/branca/usuarios/"+id;
             }
         }
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        clientId = sharedPref.getString("tel_id", MqttClient.generateClientId());
+        //clientId = MqttClient.generateClientId();
+        client =
+                new MqttAndroidClient(this.getApplicationContext(), "tcp://iot.oceanmanaus.com:1883",
+                        clientId);
 
-        //final String clientId = MqttClient.generateClientId();
-        tManager = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-
-        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE);
-
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_READ_PHONE_STATE);
-        } else {
-            //clientId = tManager.getDeviceId();
-            clientId = MqttClient.generateClientId();
-            client =
-                    new MqttAndroidClient(this.getApplicationContext(), "tcp://iot.oceanmanaus.com:1883",
-                            clientId);
-
-            try {
-                IMqttToken token = client.connect();
-                token.setActionCallback(new IMqttActionListener() {
-                    @Override
-                    public void onSuccess(IMqttToken asyncActionToken) {
-                        // We are connected
-                        Log.d(TAG, "onSuccess");
+        try {
+            IMqttToken token = client.connect();
+            token.setActionCallback(new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    // We are connected
+                    Log.d(TAG, "onSuccess");
 /*
                     String payload = "Leitor " + clientId + " está online!";
                     byte[] encodedPayload;*/
 
-                        try {
+                    try {
                         /*encodedPayload = payload.getBytes("UTF-8");
 
                         MqttMessage message = new MqttMessage(encodedPayload);
                         client.publish("/ocean/sensores/debug", message);*/
 
-                            IMqttToken subToken = client.subscribe(topico_pai, QOS);
-                            subToken.setActionCallback(new IMqttActionListener() {
-                                @Override
-                                public void onSuccess(IMqttToken asyncActionToken) {
-                                    Log.d(TAG, topico_pai + " sobrescrito");
-                                }
+                        IMqttToken subToken = client.subscribe(topico_pai, QOS);
+                        subToken.setActionCallback(new IMqttActionListener() {
+                            @Override
+                            public void onSuccess(IMqttToken asyncActionToken) {
+                                Log.d(TAG, topico_pai + " sobrescrito");
+                            }
 
-                                @Override
-                                public void onFailure(IMqttToken asyncActionToken,
-                                                      Throwable exception) {
-                                    // The subscription could not be performed, maybe the user was not
-                                    // authorized to subscribe on the specified topic e.g. using wildcards
+                            @Override
+                            public void onFailure(IMqttToken asyncActionToken,
+                                                  Throwable exception) {
+                                // The subscription could not be performed, maybe the user was not
+                                // authorized to subscribe on the specified topic e.g. using wildcards
 
-                                }
-                            });
-                        } catch (MqttPersistenceException e) {
-                            e.printStackTrace();
-                        } catch (MqttException e) {
-                            e.printStackTrace();
-                        }
+                            }
+                        });
+                    } catch (MqttPersistenceException e) {
+                        e.printStackTrace();
+                    } catch (MqttException e) {
+                        e.printStackTrace();
                     }
+                }
 
-                    @Override
-                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                        // Something went wrong e.g. connection timeout or firewall problems
-                        Log.d(TAG, "onFailure");
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    // Something went wrong e.g. connection timeout or firewall problems
+                    Log.d(TAG, "onFailure");
 
-                    }
-                });
+                }
+            });
 
-                client.setCallback(new MqttCallback() {
-                    @Override
-                    public void connectionLost(Throwable cause) {
+            client.setCallback(new MqttCallback() {
+                @Override
+                public void connectionLost(Throwable cause) {
 
-                    }
+                }
 
-                    @Override
-                    public void messageArrived(String topic, MqttMessage message) throws Exception {
-                        Log.i(TAG, topic + " --> " + message.toString());
+                @Override
+                public void messageArrived(String topic, MqttMessage message) throws Exception {
+                    Log.i(TAG, topic + " --> " + message.toString());
 
-                        JSONObject jsonMsg = new JSONObject(message.toString());
-                        Mensagem msg = new Mensagem(jsonMsg.getString("id"), jsonMsg.getString("msg"));
+                    JSONObject jsonMsg = new JSONObject(message.toString());
+                    Mensagem msg = new Mensagem(jsonMsg.getString("id"), jsonMsg.getString("msg"));
 
-                        mensagens.add(msg);
-                        rcvMensagens.getAdapter().notifyDataSetChanged();
-                    }
+                    mensagens.add(msg);
+                    rcvMensagens.getAdapter().notifyDataSetChanged();
+                }
 
-                    @Override
-                    public void deliveryComplete(IMqttDeliveryToken token) {
+                @Override
+                public void deliveryComplete(IMqttDeliveryToken token) {
 
-                    }
-                });
+                }
+            });
 
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
+        } catch (MqttException e) {
+            e.printStackTrace();
         }
+
 
 
 
@@ -192,97 +178,5 @@ public class ConversaActivity extends AppCompatActivity {
         }
 
         return mensagens;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_READ_PHONE_STATE:
-                if ((grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    clientId = tManager.getDeviceId();
-
-                    client =
-                            new MqttAndroidClient(this.getApplicationContext(), "tcp://iot.oceanmanaus.com:1883",
-                                    clientId);
-
-                    try {
-                        IMqttToken token = client.connect();
-                        token.setActionCallback(new IMqttActionListener() {
-                            @Override
-                            public void onSuccess(IMqttToken asyncActionToken) {
-                                // We are connected
-                                Log.d(TAG, "onSuccess");
-/*
-                    String payload = "Leitor " + clientId + " está online!";
-                    byte[] encodedPayload;*/
-
-                                try {
-                        /*encodedPayload = payload.getBytes("UTF-8");
-
-                        MqttMessage message = new MqttMessage(encodedPayload);
-                        client.publish("/ocean/sensores/debug", message);*/
-
-                                    IMqttToken subToken = client.subscribe(topico_pai, QOS);
-                                    subToken.setActionCallback(new IMqttActionListener() {
-                                        @Override
-                                        public void onSuccess(IMqttToken asyncActionToken) {
-                                            Log.d(TAG, topico_pai + " sobrescrito");
-                                        }
-
-                                        @Override
-                                        public void onFailure(IMqttToken asyncActionToken,
-                                                              Throwable exception) {
-                                            // The subscription could not be performed, maybe the user was not
-                                            // authorized to subscribe on the specified topic e.g. using wildcards
-
-                                        }
-                                    });
-                                } catch (MqttPersistenceException e) {
-                                    e.printStackTrace();
-                                } catch (MqttException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                                // Something went wrong e.g. connection timeout or firewall problems
-                                Log.d(TAG, "onFailure");
-
-                            }
-                        });
-
-                        client.setCallback(new MqttCallback() {
-                            @Override
-                            public void connectionLost(Throwable cause) {
-
-                            }
-
-                            @Override
-                            public void messageArrived(String topic, MqttMessage message) throws Exception {
-                                Log.i(TAG, topic + " --> " + message.toString());
-
-                                JSONObject jsonMsg = new JSONObject(message.toString());
-                                Mensagem msg = new Mensagem(jsonMsg.getString("id"), jsonMsg.getString("msg"));
-
-                                mensagens.add(msg);
-                                rcvMensagens.getAdapter().notifyDataSetChanged();
-                            }
-
-                            @Override
-                            public void deliveryComplete(IMqttDeliveryToken token) {
-
-                            }
-                        });
-
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    }
-                }
-                break;
-
-            default:
-                break;
-        }
     }
 }
