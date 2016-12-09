@@ -7,7 +7,7 @@ def on_connect(client, userdata, rc):
     print("Connected with result code "+str(rc))
 	# Subscribing in on_connect() means that if we lose the connection and
 	# reconnect then subscriptions will be renewed.
-    client.subscribe("#");
+    client.subscribe("/branca/#");
 
 # cartao mestre 296057479
 # The callback for when a PUBLISH message is received from the server.
@@ -53,11 +53,12 @@ def on_message(client, userdata, msg):
 		db.commit()
 		db.close()
 
-client = mqtt.Client()
+client = mqtt.Client(transport="websockets")
 client.on_connect = on_connect
 client.on_message = on_message
 
-client.connect("iot.oceanmanaus.com", 1883, 60)
+#client.connect("iot.oceanmanaus.com", 1883, 60)
+client.connect("broker.mqttdashboard.com", 8000, 60)
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
