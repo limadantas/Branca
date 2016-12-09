@@ -51,6 +51,20 @@
   // connect the client
   client.connect({onSuccess:onConnect});
 
+  function sendMsg () {
+    if ($.trim($("#msg").val()) !== "") {
+      var m = {
+        id: clientId,
+        corpo: $("#msg").val()
+      }
+      message = new Paho.MQTT.Message(JSON.stringify(m));
+      message.destinationName = topic;
+      message.retained = true;
+      client.send(message);
+      $("#msg").val("")
+      window.scrollTo(0,document.body.scrollHeight);
+    }
+  }
 
   // called when the client connects
   function onConnect() {
@@ -63,18 +77,14 @@
     client.send(message);
 
     $('#enviar').on("click", function() {
-      if ($.trim($("#msg").val()) !== "") {
-        var m = {
-          id: clientId,
-          corpo: $("#msg").val()
-        }
-        message = new Paho.MQTT.Message(JSON.stringify(m));
-        message.destinationName = topic;
-        message.retained = true;
-        client.send(message);
-        $("#msg").val("")
-      }
+      sendMsg()
     })
+
+    $("#msg").on('keyup', function (e) {
+      if (e.keyCode == 13 && !document.querySelector("#enviar").disabled) {
+          sendMsg()
+      }
+    });
   }
 
   // called when the client loses its connection
