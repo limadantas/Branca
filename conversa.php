@@ -63,15 +63,17 @@
     client.send(message);
 
     $('#enviar').on("click", function() {
-      var m = {
-        id: clientId,
-        corpo: $("#msg").val()
+      if ($.trim($("#msg").val()) !== "") {
+        var m = {
+          id: clientId,
+          corpo: $("#msg").val()
+        }
+        message = new Paho.MQTT.Message(JSON.stringify(m));
+        message.destinationName = topic;
+        message.retained = true;
+        client.send(message);
+        $("#msg").val("")
       }
-      message = new Paho.MQTT.Message(JSON.stringify(m));
-      message.destinationName = topic;
-      message.retained = true;
-      client.send(message);
-      $("#msg").val("")
     })
   }
 
